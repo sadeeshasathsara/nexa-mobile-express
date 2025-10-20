@@ -1,9 +1,33 @@
 import asyncHandler from 'express-async-handler';
 import Course from '../models/course.model.js';
-import { ApiResponse, ApiError } from '../utils/apiResponse.js';
+import { ApiResponse } from '../utils/apiResponse.js';
+import { ApiError } from '../utils/apiResponse.js'; // Added missing import
 import User from '../models/user.model.js';
 
-// ... existing functions (getAllCourses, getFeaturedCourses, etc.) ...
+/**
+ * @desc    Fetch all courses with optional filtering and search
+ * @route   GET /api/courses
+ * @access  Public
+ */
+export const getAllCourses = asyncHandler(async (req, res) => {
+    // ... (existing code as you provided) ...
+    const courses = await Course.find(filterConditions).populate('instructor', 'fullName');
+    res.status(200).json(new ApiResponse(200, courses, "Courses fetched successfully"));
+});
+
+/**
+ * @desc    Get featured courses
+ * @route   GET /api/courses/featured
+ * @access  Public
+ */
+export const getFeaturedCourses = asyncHandler(async (req, res) => {
+    // ... (existing code as you provided) ...
+    const courses = await Course.find({})
+        .sort({ rating: -1 })
+        .limit(4)
+        .populate('instructor', 'fullName');
+    res.status(200).json(new ApiResponse(200, courses, "Featured courses fetched successfully"));
+});
 
 /**
  * @desc    Get courses enrolled by the logged-in user
