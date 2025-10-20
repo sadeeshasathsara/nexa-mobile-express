@@ -225,13 +225,20 @@ export const createCourseReview = asyncHandler(async (req, res) => {
 // --- LESSON MANAGEMENT CONTROLLERS ---
 
 /**
- * @desc    Add a lesson to a course
+ * @desc    Add a lesson to a course with file uploads
  * @route   POST /api/courses/:courseId/lessons
  * @access  Private/Tutor
  */
 export const addLessonToCourse = asyncHandler(async (req, res) => {
-    const { title, description, weekNumber, materials } = req.body;
     const { courseId } = req.params;
+
+    // In a multipart/form-data request, non-file fields come in req.body.
+    // We expect a JSON string named 'lessonData' with the lesson's metadata.
+    if (!req.body.lessonData) {
+        throw new ApiError(400, "Lesson data is missing.");
+    }
+
+    const { title, description, weekNumber, materialsMeta } = JSON.parse(req.body.lessonData);
 
     const course = await Course.findById(courseId);
 
@@ -239,16 +246,30 @@ export const addLessonToCourse = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Course not found");
     }
 
-    // Authorization: Only the course instructor can add lessons
     if (course.instructor.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "You are not authorized to add lessons to this course");
     }
+
+    // Map the uploaded file info from req.files to the metadata provided.
+    const materials = materialsMeta.map((meta, index) => {
+        const file = req.files[index];
+        if (!file) {
+            // This case handles materials that are just links, with no file upload
+            return meta;
+        }
+        return {
+            ...meta,
+            fileId: file.id,
+            filename: file.filename,
+            contentType: file.contentType,
+        };
+    });
 
     const newLesson = {
         title,
         description,
         weekNumber,
-        materials: materials || []
+        materials,
     };
 
     course.lessons.push(newLesson);
@@ -271,7 +292,6 @@ export const getCourseLessons = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Course not found");
     }
 
-    // Authorization: Must be the instructor or an enrolled student
     const isTutor = course.instructor.toString() === user._id.toString();
     const isEnrolled = user.enrolledCourses.some(id => id.toString() === courseId);
 
@@ -279,7 +299,23 @@ export const getCourseLessons = asyncHandler(async (req, res) => {
         throw new ApiError(403, "You are not authorized to view these lessons");
     }
 
-    res.status(200).json(new ApiResponse(200, course.lessons, "Lessons fetched successfully"));
+    const lessonsWithFileUrls = course.lessons.map(lesson => {
+        const materialsWithUrls = lesson.materials.map(material => {
+            if (material.filename) {
+                return {
+                    ...material.toObject(),
+                    url: `/api/files/${material.filename}`
+                }
+            }
+            return material.toObject();
+        });
+        return {
+            ...lesson.toObject(),
+            materials: materialsWithUrls
+        }
+    });
+
+    res.status(200).json(new ApiResponse(200, lessonsWithFileUrls, "Lessons fetched successfully"));
 });
 
 /**
@@ -288,6 +324,9 @@ export const getCourseLessons = asyncHandler(async (req, res) => {
  * @access  Private/Tutor
  */
 export const updateLessonInCourse = asyncHandler(async (req, res) => {
+    // Note: This simplified update does not handle file changes.
+    // A full implementation would require deleting old files from GridFS
+    // and handling new file uploads.
     const { title, description, weekNumber, materials } = req.body;
     const { courseId, lessonId } = req.params;
 
@@ -296,7 +335,6 @@ export const updateLessonInCourse = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Course not found");
     }
 
-    // Authorization: Only the course instructor can update lessons
     if (course.instructor.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "You are not authorized to update lessons in this course");
     }
@@ -321,6 +359,7 @@ export const updateLessonInCourse = asyncHandler(async (req, res) => {
  * @access  Private/Tutor
  */
 export const deleteLessonFromCourse = asyncHandler(async (req, res) => {
+    // Note: A full implementation would require deleting associated files from GridFS.
     const { courseId, lessonId } = req.params;
 
     const course = await Course.findById(courseId);
@@ -328,7 +367,6 @@ export const deleteLessonFromCourse = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Course not found");
     }
 
-    // Authorization: Only the course instructor can delete lessons
     if (course.instructor.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "You are not authorized to delete lessons from this course");
     }
@@ -338,9 +376,8 @@ export const deleteLessonFromCourse = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Lesson not found");
     }
 
-    lesson.deleteOne(); // Mongoose v8+ method for subdocuments
+    lesson.deleteOne();
     await course.save();
 
     res.status(200).json(new ApiResponse(200, {}, "Lesson deleted successfully"));
 });
-

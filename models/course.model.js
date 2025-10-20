@@ -12,9 +12,15 @@ const lessonMaterialSchema = new mongoose.Schema({
         required: true,
         trim: true,
     },
-    url: {
+    // GridFS metadata
+    fileId: {
+        type: mongoose.Schema.Types.ObjectId,
+    },
+    filename: {
         type: String,
-        required: true,
+    },
+    contentType: {
+        type: String,
     }
 });
 

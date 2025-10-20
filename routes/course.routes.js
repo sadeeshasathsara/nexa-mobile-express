@@ -1,4 +1,6 @@
 import express from 'express';
+import multer from 'multer';
+import storage from '../config/storage.js';
 import {
     getAllCourses,
     getFeaturedCourses,
@@ -17,6 +19,7 @@ import {
 import { protect, isTutor, isStudent } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
+const upload = multer({ storage });
 
 // --- Public Routes ---
 router.get('/featured', getFeaturedCourses);
@@ -27,21 +30,22 @@ router.get('/my-courses', protect, getMyCourses);
 
 // --- Tutor Only Routes ---
 router.post('/create', protect, isTutor, createCourse);
-router.put('/:id/update', protect, isTutor, updateCourse); // Note: Renamed from :courseId for consistency
-router.delete('/:id/delete', protect, isTutor, deleteCourse); // Note: Renamed from :courseId for consistency
+router.put('/:id/update', protect, isTutor, updateCourse);
+router.delete('/:id/delete', protect, isTutor, deleteCourse);
 
 // --- Student Only Routes ---
-router.post('/:id/enroll', protect, isStudent, enrollInCourse); // Note: Renamed from :courseId
-router.post('/:id/review', protect, isStudent, createCourseReview); // Note: Renamed from :courseId
+router.post('/:id/enroll', protect, isStudent, enrollInCourse);
+router.post('/:id/review', protect, isStudent, createCourseReview);
 
 // --- Lesson Management Routes ---
 router.route('/:courseId/lessons')
-    .post(protect, isTutor, addLessonToCourse) // Tutor adds a lesson
-    .get(protect, getCourseLessons); // Tutor or enrolled student gets lessons
+    // Tutor adds a lesson with file uploads in a single request
+    .post(protect, isTutor, upload.array('lessonFiles', 5), addLessonToCourse)
+    .get(protect, getCourseLessons);
 
 router.route('/:courseId/lessons/:lessonId')
-    .put(protect, isTutor, updateLessonInCourse) // Tutor updates a lesson
-    .delete(protect, isTutor, deleteLessonFromCourse); // Tutor deletes a lesson
+    .put(protect, isTutor, updateLessonInCourse)
+    .delete(protect, isTutor, deleteLessonFromCourse);
 
 // --- Public Route for Single Course (must be last) ---
 router.route('/:id').get(getCourseById);
