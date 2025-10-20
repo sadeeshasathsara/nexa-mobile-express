@@ -8,30 +8,44 @@ import {
     updateCourse,
     deleteCourse,
     enrollInCourse,
-    createCourseReview
+    createCourseReview,
+    addLessonToCourse,
+    getCourseLessons,
+    updateLessonInCourse,
+    deleteLessonFromCourse
 } from '../controllers/course.controller.js';
 import { protect, isTutor, isStudent } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
 // --- Public Routes ---
-router.get('/featured', protect, getFeaturedCourses);
-router.route('/').get(protect, getAllCourses);
+router.get('/featured', getFeaturedCourses);
+router.route('/').get(getAllCourses);
 
 // --- Private General Routes ---
-router.get('/my-courses', protect, getMyCourses); // For both students and tutors
+router.get('/my-courses', protect, getMyCourses);
 
 // --- Tutor Only Routes ---
 router.post('/create', protect, isTutor, createCourse);
-router.put('/:id/update', protect, isTutor, updateCourse);
-router.delete('/:id/delete', protect, isTutor, deleteCourse);
+router.put('/:id/update', protect, isTutor, updateCourse); // Note: Renamed from :courseId for consistency
+router.delete('/:id/delete', protect, isTutor, deleteCourse); // Note: Renamed from :courseId for consistency
 
 // --- Student Only Routes ---
-router.post('/:id/enroll', protect, isStudent, enrollInCourse);
-router.post('/:id/review', protect, isStudent, createCourseReview);
+router.post('/:id/enroll', protect, isStudent, enrollInCourse); // Note: Renamed from :courseId
+router.post('/:id/review', protect, isStudent, createCourseReview); // Note: Renamed from :courseId
 
-// --- Public Route for Single Course ---
+// --- Lesson Management Routes ---
+router.route('/:courseId/lessons')
+    .post(protect, isTutor, addLessonToCourse) // Tutor adds a lesson
+    .get(protect, getCourseLessons); // Tutor or enrolled student gets lessons
+
+router.route('/:courseId/lessons/:lessonId')
+    .put(protect, isTutor, updateLessonInCourse) // Tutor updates a lesson
+    .delete(protect, isTutor, deleteLessonFromCourse); // Tutor deletes a lesson
+
+// --- Public Route for Single Course (must be last) ---
 router.route('/:id').get(getCourseById);
 
 
 export default router;
+
