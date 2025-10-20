@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import courseRoutes from './routes/course.routes.js';
+import scheduleRoutes from './routes/schedule.routes.js';
 
 // --- Import Error Handling Middleware ---
 import { errorHandler } from './middleware/error.middleware.js';
@@ -34,6 +35,7 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/courses', courseRoutes);
+app.use('/api/schedule', scheduleRoutes);
 
 // --- Health Check Route ---
 app.get('/', (req, res) => {
