@@ -136,5 +136,4 @@ dist
 .pnp.*
 
 seeder.js
-
-/data
+data/
