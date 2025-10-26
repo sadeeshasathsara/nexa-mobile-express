@@ -60,3 +60,28 @@ export const isStudent = (req, res, next) => {
         throw new ApiError(403, 'Not authorized as a student');
     }
 };
+
+/**
+ * @desc Attaches user object to the request if authenticated, but does not fail if not.
+ * This is for public routes that have enhanced features for logged-in users.
+ */
+export const optionalAuth = asyncHandler(async (req, res, next) => {
+    let token;
+
+    token = req.cookies.jwt;
+    req.user = null; // Default to no user
+
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            // Find the user but don't fail if not found
+            req.user = await User.findById(decoded.id).select('-password');
+        } catch (error) {
+            // If token is invalid, we don't throw an error.
+            // We just proceed without a user object.
+            console.log("Invalid token for optional auth, proceeding as guest.");
+        }
+    }
+    next();
+});
+

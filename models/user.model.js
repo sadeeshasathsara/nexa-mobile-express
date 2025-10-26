@@ -37,10 +37,24 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Course'
     }],
-    createdCourses: [{
+    createdCourses: [{ // Note: This field seems unused based on current logic, might remove later
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Course'
-    }]
+    }],
+    preferredSubjects: {
+        type: [String],
+        default: []
+    },
+    interestTags: {
+        type: [String],
+        default: []
+    },
+    // --- New Language Preference Field ---
+    preferredLanguage: {
+        type: String,
+        default: 'en', // Default to English
+        trim: true
+    }
 }, {
     timestamps: true // Adds createdAt and updatedAt timestamps
 });

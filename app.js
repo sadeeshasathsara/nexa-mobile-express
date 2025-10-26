@@ -9,6 +9,8 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import courseRoutes from './routes/course.routes.js';
 import scheduleRoutes from './routes/schedule.routes.js';
+import quizRoutes from './routes/quiz.routes.js';
+import chatRoutes from './routes/chat.routes.js';
 
 // --- Import Error Handling Middleware ---
 import { errorHandler } from './middleware/error.middleware.js';
@@ -19,7 +21,7 @@ const app = express();
 // --- Middleware ---
 app.use(helmet());
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: 'http://localhost:8081',
     credentials: true
 }));
 app.use(express.json());
@@ -36,6 +38,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/schedule', scheduleRoutes);
+app.use('/api/quizzes', quizRoutes);
+app.use('/api/chat', chatRoutes);
 
 // --- Health Check Route ---
 app.get('/', (req, res) => {

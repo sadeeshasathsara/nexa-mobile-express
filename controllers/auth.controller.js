@@ -23,6 +23,8 @@ const generateTokenAndSetCookie = (res, user) => {
         sameSite: 'strict',
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     });
+
+    return token;
 };
 
 /**
@@ -72,12 +74,13 @@ export const loginUser = asyncHandler(async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
-        generateTokenAndSetCookie(res, user);
+        const token = generateTokenAndSetCookie(res, user);
         const loggedInUser = {
             _id: user._id,
             fullName: user.fullName,
             email: user.email,
             role: user.role,
+            token: token
         };
         res.status(200).json(new ApiResponse(200, loggedInUser, "User logged in successfully"));
     } else {
