@@ -7,6 +7,10 @@ Aligned with the **UN Sustainable Development Goal 4 (Quality Education)**, Nexa
 
 This backend is built using **Node.js**, **Express.js**, and **MongoDB**, offering a **robust and scalable foundation** for the mobile application's features.
 
+<div align="center">
+<img width="1024" height="682" alt="102" src="https://github.com/user-attachments/assets/b1ab6234-e0f1-49fd-81cc-5847b6a40ba2" />
+</div>
+
 ---
 
 ## 📱 Frontend Repository
